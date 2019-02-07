@@ -1,0 +1,14 @@
+# Files
+.vs
+*
+# Directories
+./debug/
+./release/
+./x64/
+./win32/
+./tcphelper/debug/
+./tcphelper/release/
+./tcphelper/win32/
+./tcphelper/x64/
+
+
