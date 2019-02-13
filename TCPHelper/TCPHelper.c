@@ -18,8 +18,9 @@
 int GetConnectionPID(int srcPort, WCHAR* srcAddress, int addressFamily) 
 {
 	char szSrcAddress[128];
-	int ret = wcstombs(szSrcAddress, srcAddress, sizeof(szSrcAddress));
-	if (ret == 128) szSrcAddress[127] = '\0';
+	size_t numConverted;
+	errno_t ret = wcstombs_s(&numConverted, szSrcAddress, _countof(szSrcAddress), srcAddress, _TRUNCATE);
+	if (numConverted == 128) szSrcAddress[127] = '\0';
 
 	if (addressFamily == 4) {
 		// Declare and initialize variables
@@ -50,11 +51,11 @@ int GetConnectionPID(int srcPort, WCHAR* srcAddress, int addressFamily)
 
 		if ((dwRetVal = GetTcpTable2(pTcpTable, &ulSize, TRUE)) == NO_ERROR) {
 			for (i = 0; i < (int)pTcpTable->dwNumEntries; i++) {
-				MIB_TCPROW2& table = pTcpTable->table[i];
-				if (ntohs((u_short)table.dwLocalPort) == srcPort) {
-					IpAddr.S_un.S_addr = (u_long)table.dwLocalAddr;
+				PMIB_TCPROW2 pTable = &pTcpTable->table[i];
+				if (ntohs((u_short)pTable->dwLocalPort) == srcPort) {
+					IpAddr.S_un.S_addr = (u_long)pTable->dwLocalAddr;
 					if (!_stricmp(inet_ntoa(IpAddr), szSrcAddress)) {
-						return table.dwOwningPid;
+						return pTable->dwOwningPid;
 					}
 				}
 			}
@@ -89,12 +90,12 @@ int GetConnectionPID(int srcPort, WCHAR* srcAddress, int addressFamily)
 		// the actual data we require
 		if ((dwRetVal = GetTcp6Table2(pTcpTable, &dwSize, TRUE)) == NO_ERROR) {
 			for (i = 0; i < (int)pTcpTable->dwNumEntries; i++) {
-				MIB_TCP6ROW2& table = pTcpTable->table[i];
+				PMIB_TCP6ROW2 pTable = &pTcpTable->table[i];
 
-				if (ntohs((u_short)table.dwLocalPort) == srcPort) {
-					if (InetNtop(AF_INET6, &table.LocalAddr, ipstringbuffer, 46) != NULL) {
+				if (ntohs((u_short)pTable->dwLocalPort) == srcPort) {
+					if (InetNtop(AF_INET6, &pTable->LocalAddr, ipstringbuffer, 46) != NULL) {
 						if (!wcscmp(ipstringbuffer, srcAddress)) {
-							return table.dwOwningPid;
+							return pTable->dwOwningPid;
 						}
 					}
 				}
@@ -123,37 +124,15 @@ int GetConnectionPID(int srcPort, WCHAR* srcAddress, int addressFamily)
 //	return null;
 //}
 
-//public static string GetProcessName(ulong processId)
-//{
-//	StringBuilder buffer = new StringBuilder(1024);
-//	IntPtr hprocess = Kernel32.OpenProcess(Kernel32.ProcessAccessFlags.QueryLimitedInformation, false, (uint)processId);
-//	if (hprocess != IntPtr.Zero)
-//	{
-//		try
-//		{
-//			int size = buffer.Capacity;
-//			if (Kernel32.QueryFullProcessImageName(hprocess, 0, buffer, ref size))
-//			{
-//				return buffer.ToString();
-//			}
-//		}
-//		finally
-//		{
-//			Kernel32.CloseHandle(hprocess);
-//		}
-//	}
-//	return string.Empty;
-//}
-
 int GetProcessName(int processId, WCHAR** pBuffer, int bufferSize) {
-	HANDLE hProcess = ::OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, false, processId);
+	HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, processId);
 	if (hProcess) {
-		try {
+		__try {
 			DWORD dwSize = bufferSize;
-			BOOL bRet = ::QueryFullProcessImageNameW(hProcess, 0, *pBuffer, &dwSize);
+			BOOL bRet = QueryFullProcessImageNameW(hProcess, 0, *pBuffer, &dwSize);
 			return bRet ? 0 : -1;
 		}
-		catch (...) {
+		__finally {
 
 		}
 	}

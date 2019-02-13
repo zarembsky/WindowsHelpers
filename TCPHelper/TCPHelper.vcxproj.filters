@@ -26,13 +26,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="dllmain.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TCPHelper.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="dllmain.cpp">
+    <ClCompile Include="TCPHelper.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

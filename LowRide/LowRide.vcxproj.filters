@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="TCPHelperDriver.c">
+    <ClCompile Include="LowRide.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
